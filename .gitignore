@@ -1,0 +1,23 @@
+# Entorno virtual
+venv/
+.env
+
+# Archivos compilados de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Datos descargados o generados
+data/
+data/processed/
+
+# Archivos de configuración de IDE
+.vscode/
+.idea/
+
+# Jupyter Notebook checkpoints (si llegás a usar notebooks)
+.ipynb_checkpoints/
+
+# Logs
+*.log
