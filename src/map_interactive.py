@@ -11,6 +11,7 @@ gimnasios = load_gym_data("data/gimnasios.geojson")
 buffer_500 = gpd.read_file("data/processed/buffer_500m.geojson")
 buffer_1000 = gpd.read_file("data/processed/buffer_1000m.geojson")
 barrios = load_barrios("data/barrios.geojson")
+censo = gpd.read_file("data/la_plata_censo.geojson")
 
 # -------------------------------
 # 2) Reparar gimnasios con geometría faltante
@@ -107,3 +108,22 @@ folium.LayerControl().add_to(m)
 # -------------------------------
 m.save("data/mapa_interactivo.html")
 print("Mapa interactivo guardado en data/mapa_interactivo.html")
+
+def poblacion_en_buffer(buffer_gdf, censo_gdf, columna_poblacion="POB_TOTAL"):
+    
+    poblaciones = []
+    for idx, buffer in buffer_gdf.iterrows():
+        #Seleccionar radios censales que intersectan con el buffer
+        dentro = censo_gdf[censo_gdf.geometry.intersects(buffer.geometry)]
+        #Sumar la población
+        poblacion_total = dentro[columna_poblacion].sum()
+        poblaciones.append(poblacion_total)
+        
+    buffer_gdf = buffer_gdf.copy()
+    buffer_gdf["poblacion"] = poblaciones
+    
+    return buffer_gdf
+
+
+buffer_500 = poblacion_en_buffer(buffer_500, censo)
+buffer_1000 = poblacion_en_buffer(buffer_1000, censo)
