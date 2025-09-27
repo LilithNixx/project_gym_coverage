@@ -1,3 +1,12 @@
+# utils.py
+# -------------------------------
+# Propósito: Funciones auxiliares reutilizables en todo el proyecto.
+# - Funciones para cargar GeoJSON o shapefiles.
+# - Funciones para reproyecciones o transformaciones comunes.
+# - Funciones de ayuda para limpieza de datos geográficos.
+
+
+
 import geopandas as gpd
 import pandas as pd
 

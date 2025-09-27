@@ -1,3 +1,11 @@
+# process.py
+# -------------------------------
+# Propósito: Procesar y limpiar los datos para análisis.
+# - Reproyectar geodatos a un CRS común.
+# - Crear buffers de 500 m y 1000 m alrededor de los gimnasios.
+# - Guardar estos datos procesados para ser usados en métricas y visualización.
+
+
 # funciones de procesamiento espacial (buffers, joins)
 import geopandas as gpd
 from utils import load_gym_data

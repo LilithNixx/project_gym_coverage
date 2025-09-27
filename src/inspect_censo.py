@@ -1,3 +1,11 @@
+# inspect_censo.py
+# -------------------------------
+# Propósito: Inspeccionar y explorar los datos del censo.
+# - Revisar columnas y geometrías.
+# - Filtrar La Plata.
+# - Guardar el censo en formato GeoJSON para su uso en otros scripts.
+
+
 import geopandas as gpd
 
 archivo = "data\RADIOS_2022_V2025-1.zip"

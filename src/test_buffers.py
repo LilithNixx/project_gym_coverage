@@ -1,3 +1,11 @@
+# test_buffers.py
+# -------------------------------
+# Propósito: Probar la creación y validez de los buffers alrededor de los gimnasios.
+# - Verificar que los buffers tengan la distancia correcta (500 m, 1000 m, etc.).
+# - Confirmar que los buffers están correctamente proyectados y superpuestos con los barrios.
+# - Facilitar la detección de errores antes de calcular métricas de accesibilidad.
+
+
 import geopandas as gpd
 from utils import load_gym_data, load_barrios
 import matplotlib.pyplot as plt

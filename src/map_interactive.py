@@ -1,3 +1,12 @@
+# map_interactive.py
+# -------------------------------
+# Propósito: Visualizar los datos y métricas en un mapa interactivo.
+# - Mostrar barrios de La Plata y su población.
+# - Superponer buffers de gimnasios.
+# - Colorear barrios según el índice de accesibilidad.
+# - Permitir interacción con el mapa (hover, click, leyendas).
+
+
 import folium
 import geopandas as gpd
 import pandas as pd

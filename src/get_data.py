@@ -1,4 +1,11 @@
-# src/get_data.py
+# get_data.py
+# -------------------------------
+# Propósito: Descargar y cargar los datos iniciales.
+# 1) Obtener los polígonos de barrios de La Plata desde OSM.
+# 2) Obtener la ubicación de los gimnasios desde OSM.
+# 3) Cargar el censo de La Plata desde un shapefile comprimido.
+# Todos los datos se guardan en la carpeta "data/" para su uso posterior.
+
 import osmnx as ox
 import geopandas as gpd
 

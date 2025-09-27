@@ -1,29 +1,66 @@
+# calc_accessibility.py
+# -------------------------------
+# Propósito: Calcular métricas de accesibilidad a gimnasios por barrio.
+# - Calcular la población dentro de los buffers.
+# - Contar gimnasios cercanos a cada barrio.
+# - Generar índice de accesibilidad (gimnasios/populación).
+
+
 import geopandas as gpd
-from utils import load_barrios
 
-# Cargar barrios con población
-barrios = load_barrios("data/barrios.geojson")
+# -------------------------------
+# 1) Cargar datos procesados
+# -------------------------------
+gimnasios = gpd.read_file("data/gimnasios.geojson")
+censo = gpd.read_file("data/la_plata_censo.geojson")
 
-# Para prueba, si no tenemos población real:
-if 'population' not in barrios.columns:
-    import numpy as np
-    barrios['population'] = np.random.randint(1000, 20000, size=len(barrios))
+# -------------------------------
+# 2) Crear buffers
+# -------------------------------
+# EPSG:4326 (grados) no sirve para buffers, hay que proyectar a metros
+gimnasios_proj = gimnasios.to_crs(epsg=3857)  # Web Mercator (metros)
+censo_proj = censo.to_crs(epsg=3857)
 
-# Cargar buffers de 500 m
-buffer_500 = gpd.read_file("data/processed/buffer_500m.geojson")
+buffer_500 = gimnasios_proj.copy()
+buffer_500["geometry"] = buffer_500.buffer(500)
 
-# Asegurarnos de que todos los CRS coincidan
-buffer_500 = buffer_500.to_crs(barrios.crs)
+buffer_1000 = gimnasios_proj.copy()
+buffer_1000["geometry"] = buffer_1000.buffer(1000)
 
-# Inicializamos columna de accesibilidad
-barrios['gimnasios_cercanos'] = 0
+# -------------------------------
+# 3) Función para calcular población en buffer
+# -------------------------------
+def poblacion_en_buffer(buffers, censo):
+    resultados = []
+    for index_row, buffer_pol in buffers.iterrows():
+        interseccion = gpd.overlay(censo, gpd.GeoDataFrame(geometry=[buffer_pol.geometry], crs=censo.crs), how="intersection")
+        
+        #Si el buffer no toca ningún polígono censal, interseccion queda vacío.
+        if not interseccion.empty:
+            # Calcular proporción de área
+            interseccion["area_intersec"] = interseccion.geometry.area
+            interseccion["area_total"] = interseccion.to_crs(epsg=3857).geometry.area
+            interseccion["prop_area"] = interseccion["area_intersec"] / interseccion["area_total"]
+            
+            # Población ponderada
+            interseccion["pob_est"] = interseccion["prop_area"] * interseccion["POB_TOT_P"]
+            poblacion = interseccion["pob_est"].sum()
+        else:
+            poblacion = 0
+        resultados.append(poblacion)
+    buffers["poblacion"] = resultados
+    return buffers
 
-# Contamos cuántos buffers intersectan cada barrio
-for idx, barrio in barrios.iterrows():
-    intersect_count = buffer_500.intersects(barrio.geometry).sum()
-    barrios.at[idx, 'gimnasios_cercanos'] = intersect_count
+# -------------------------------
+# 4) Calcular
+# -------------------------------
+buffer_500 = poblacion_en_buffer(buffer_500, censo_proj)
+buffer_1000 = poblacion_en_buffer(buffer_1000, censo_proj)
 
-# Calculamos índice de accesibilidad
-barrios['indice_accesibilidad'] = barrios['gimnasios_cercanos'] / barrios['population']
+# -------------------------------
+# 5) Guardar resultados
+# -------------------------------
+buffer_500.to_file("data/buffer_500.geojson", driver="GeoJSON")
+buffer_1000.to_file("data/buffer_1000.geojson", driver="GeoJSON")
 
-print(barrios[['nombre', 'population', 'gimnasios_cercanos', 'indice_accesibilidad']])
+print("Buffers con población estimada guardados en data/")
