@@ -15,6 +15,7 @@ ciudad = "La Plata, Argentina"
 # 1) Descargar polígonos de barrios
 # -------------------------------
 barrios = ox.geocode_to_gdf(ciudad)
+barrios = barrios.to_crs(epsg=4326)
 barrios.to_file("data/barrios.geojson", driver="GeoJSON")
 print("Barrios guardados en data/barrios.geojson")
 
@@ -39,18 +40,15 @@ print("Datos descargados y guardados correctamente en la carpeta data/")
 # 3) Cargar censo de La Plata
 # -------------------------------
 
+#  Cargar censo de todos los departamentos de BA
 archivo = "data/RADIOS_2022_V2025-1.zip"
-
-# Cargar el shapefile comprimido
 gdf = gpd.read_file(f"zip://{archivo}")
+gdf = gdf[gdf["PROV"] == "06"]  # solo provincia BA
+gdf = gdf.to_crs(epsg=4326)
 
-# Filtrar La Plata (provincia Buenos Aires = '06', departamento = '134')
-la_plata_censo = gdf[(gdf["PROV"] == "06") & (gdf["DEPTO"] == "134")]
+#  Filtrar radios que intersectan con barrios
+la_plata_censo = gpd.sjoin(gdf, barrios, how="inner", predicate="intersects")
 
-# Reproyectar a WGS84 para que encaje con los gimnasios (EPSG:4326)
-la_plata_censo = la_plata_censo.to_crs(epsg=4326)
-
-# Guardar para usar después
+#  Guardar
 la_plata_censo.to_file("data/la_plata_censo.geojson", driver="GeoJSON")
 print("Censo de La Plata guardado en data/la_plata_censo.geojson")
-

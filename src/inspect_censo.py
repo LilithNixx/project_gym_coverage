@@ -23,3 +23,4 @@ ba = gdf[gdf["PROV"] == "06"]
 
 # Ver todos los deptos disponibles
 print(ba["DEPTO"].unique())
+
