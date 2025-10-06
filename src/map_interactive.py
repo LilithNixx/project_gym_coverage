@@ -67,12 +67,6 @@ gimnasios = gpd.GeoDataFrame(
     crs="EPSG:4326"
 )
 
-gimnasios["name"] = gimnasios["name"].fillna("Sin nombre")
-gimnasios = gimnasios[["geometry", "name", "leisure"]]
-
-# -------------------------------
-# 3) Índice de accesibilidad
-# -------------------------------
 # -------------------------------
 # 3) Índice de accesibilidad (método 2SFCA)
 # -------------------------------

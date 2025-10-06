@@ -97,3 +97,5 @@ print(buffer_500["poblacion"].head(10))
 
 print("CRS gimnasios:", gimnasios.crs)
 print("CRS censo:", censo.crs)
+
+
