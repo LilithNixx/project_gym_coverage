@@ -162,7 +162,7 @@ def generar_mapa(gimnasios, buffer_500, buffer_1000, barrios, output_file="mapa.
     folium.LayerControl(collapsed=False).add_to(m)
 
     # Guardar
-    output_file = "src/outputs/mapa_interactivo.html"
+    output_file = "docs/index.html"
     m.save(output_file)
     print(f"Mapa guardado en {output_file}")
 
