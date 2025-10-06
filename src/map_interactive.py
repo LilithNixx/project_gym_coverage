@@ -73,16 +73,32 @@ gimnasios = gimnasios[["geometry", "name", "leisure"]]
 # -------------------------------
 # 3) Índice de accesibilidad
 # -------------------------------
-barrios["gimnasios_cercanos"] = 0
+# -------------------------------
+# 3) Índice de accesibilidad (método 2SFCA)
+# -------------------------------
 
-for idx, barrio in barrios.iterrows():
-    intersect_count = buffer_500.intersects(barrio.geometry).sum()
-    barrios.at[idx, "gimnasios_cercanos"] = intersect_count
+# Paso 1: calcular la razón R_j = S_j / P_j para cada gimnasio (oferta/población)
+# Suponemos S_j = 1 gimnasio por buffer
+buffer_500["Rj"] = 1 / buffer_500["poblacion"]
+buffer_500["Rj"] = buffer_500["Rj"].replace([float("inf")], 0).fillna(0)
 
-barrios["indice_accesibilidad"] = barrios.apply(
-    lambda row: row["gimnasios_cercanos"] / row["population"] if row["population"] > 0 else None,
-    axis=1,
+# Paso 2: calcular A_i = suma de Rj de los gimnasios cuyo buffer intersecta el barrio
+barrios["indice_accesibilidad"] = 0.0
+
+for i, barrio in barrios.iterrows():
+    gimnasios_cercanos = buffer_500[buffer_500.intersects(barrio.geometry)]
+    if len(gimnasios_cercanos) > 0:
+        barrios.at[i, "indice_accesibilidad"] = gimnasios_cercanos["Rj"].sum()
+    else:
+        barrios.at[i, "indice_accesibilidad"] = 0.0
+
+# También guardamos cuántos gimnasios tiene cerca
+barrios["gimnasios_cercanos"] = barrios.apply(
+    lambda row: buffer_500.intersects(row.geometry).sum(), axis=1
 )
+
+print(barrios[["name", "population", "gimnasios_cercanos", "indice_accesibilidad"]].head(10))
+
 
 # -------------------------------
 # 4) Generar mapa

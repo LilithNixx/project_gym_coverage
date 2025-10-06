@@ -94,3 +94,6 @@ print("Buffers con población estimada guardados en /data")
 print("Cantidad de buffers con población > 0:", (buffer_500["poblacion"] > 0).sum())
 print("Población en cada buffer (primeros 10):")
 print(buffer_500["poblacion"].head(10))
+
+print("CRS gimnasios:", gimnasios.crs)
+print("CRS censo:", censo.crs)
