@@ -1,0 +1,100 @@
+# 🏋️‍♀️ Cobertura de gimnasios en la ciudad de La Plata
+
+Este proyecto analiza la **distribución geográfica de gimnasios en la ciudad de La Plata** y la relación con la **población estimada de cada barrio**, para identificar **zonas con mayor o menor acceso a centros de fitness**.
+
+---
+
+## 📊 Descripción general
+
+Se construyó una visualización interactiva a partir de **datos abiertos** que permite explorar:
+- Los **gimnasios registrados en OpenStreetMap** (`leisure=fitness_centre`).
+- Los **barrios de La Plata** y su población total.
+- **Buffers de cobertura** de 500 m y 1000 m alrededor de cada gimnasio.
+- Un **índice de accesibilidad** que estima la cantidad de gimnasios cercanos en relación con la población local.
+
+El mapa final se genera con **Folium** y permite hacer clic sobre los barrios o gimnasios para ver detalles.
+
+---
+
+## 🗂️ Estructura del proyecto
+
+proyect_gym_coverage/
+│
+├── data/ # Datos geoespaciales (GeoJSON)
+│ ├── gimnasios.geojson
+│ ├── barrios.geojson
+│ ├── la_plata_censo.geojson
+│ ├── buffer_500m.geojson
+│ └── buffer_1000m.geojson
+│
+├── src/ # Código fuente
+│ ├── calc_population.py # Une barrios con radios censales para calcular población
+│ ├── calc_accessibility_index.py # Calcula índice de accesibilidad a gimnasios
+│ ├── map_interactive.py # Genera el mapa interactivo final
+│ └── utils.py # Funciones auxiliares para carga y limpieza de datos
+│
+├── outputs/
+│ └── mapa_interactivo.html # Mapa generado (resultado final)
+│
+├── requirements.txt # Dependencias de Python
+└── README.md # Este archivo
+
+
+---
+
+## ⚙️ Instalación y uso
+
+### 1️⃣ Crear entorno virtual
+```bash
+python -m venv venv
+source venv/bin/activate   # En Linux/Mac
+venv\Scripts\activate      # En Windows
+
+2️⃣ Instalar dependencias
+
+pip install -r requirements.txt
+
+3️⃣ Ejecutar los scripts
+
+Primero calcular población por barrio:
+
+python src/calc_population.py
+
+Luego calcular el índice de accesibilidad:
+
+python src/calc_accessibility_index.py
+
+Finalmente generar el mapa interactivo:
+
+python src/map_interactive.py
+
+El resultado se guarda en:
+
+docs/index.html
+
+📚 Fuentes de datos
+
+Gimnasios: OpenStreetMap
+ (leisure=fitness_centre)
+
+Barrios de La Plata: OpenStreetMap Boundaries
+
+Población: Radios censales del Censo Nacional 2010 - INDEC
+
+Proyección y cálculos espaciales: GeoPandas / Shapely
+
+Se estima que el 70 % de la población pertenece al rango etario 15–70 años, según proporciones publicadas por el INDEC (Censo 2022).
+
+💡 Objetivo
+
+Esta herramienta busca facilitar el análisis territorial y la planificación urbana y deportiva, ofreciendo una forma clara e interactiva de visualizar la accesibilidad a gimnasios en La Plata.
+
+🧑‍💻 Autoría
+
+Proyecto desarrollado por Daniela Sol Bellingeri, estudiante de Ingeniería en Sistemas, como parte de un ejercicio de análisis geoespacial y visualización de datos abiertos.
+
+🗺️ Vista previa
+
+Podés ver el mapa interactivo completo en el siguiente enlace (si está desplegado con GitHub Pages):
+
+👉 Ver mapa en línea

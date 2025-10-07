@@ -10,8 +10,8 @@ import geopandas as gpd
 # -------------------------------
 # 1) Cargar datos
 # -------------------------------
-barrios = gpd.read_file("data/barrios_con_poblacion.geojson")  # Barrios de La Plata
-buffer_500 = gpd.read_file("data/buffer_500m.geojson")  # Buffers ya calculados
+barrios = gpd.read_file("data/raw/barrios_con_poblacion.geojson")  # Barrios de La Plata
+buffer_500 = gpd.read_file("data/raw/buffer_500m.geojson")  # Buffers ya calculados
 
 # -------------------------------
 # 2) Preparar población si no está ajustada
@@ -46,7 +46,7 @@ barrios["indice_accesibilidad"] = barrios.apply(
 # -------------------------------
 # 5) Guardar resultados
 # -------------------------------
-output_file = "data/barrios_con_indice.geojson"
+output_file = "data/processed/barrios_con_indice.geojson"
 barrios.to_file(output_file, driver="GeoJSON")
 print(f"Archivo guardado con índice de accesibilidad: {output_file}")
 

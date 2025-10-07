@@ -3,8 +3,8 @@ import geopandas as gpd
 # -------------------------------
 # 1) Cargar barrios y censo
 # -------------------------------
-barrios = gpd.read_file("data/barrios.geojson")
-censo = gpd.read_file("data/la_plata_censo.geojson")
+barrios = gpd.read_file("data/raw/barrios.geojson")
+censo = gpd.read_file("data/raw/la_plata_censo.geojson")
 
 # -------------------------------
 # 2) Proyectar a CRS métrico (metros)
@@ -33,5 +33,5 @@ barrios["population"] = barrios["population"].fillna(0)
 # -------------------------------
 # 4) Guardar archivo
 # -------------------------------
-barrios.to_file("data/barrios_con_poblacion.geojson", driver="GeoJSON")
+barrios.to_file("data/processed/barrios_con_poblacion.geojson", driver="GeoJSON")
 print("Archivo 'barrios_con_poblacion.geojson' generado con éxito.")
