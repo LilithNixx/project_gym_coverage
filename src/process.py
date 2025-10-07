@@ -11,7 +11,7 @@ import geopandas as gpd
 from utils import load_gym_data
 
 # Cargar gimnasios
-gimnasios = load_gym_data("data/gimnasios.geojson")
+gimnasios = load_gym_data("data/raw/gimnasios.geojson")
 
 # Convertir a CRS métrico (UTM zona 21S para La Plata)
 gim_metrico = gimnasios.to_crs(epsg=32721)

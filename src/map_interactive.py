@@ -1,103 +1,75 @@
 # map_interactive.py
 # -------------------------------
-# Propósito: Visualizar los datos y métricas en un mapa interactivo.
-# - Mostrar barrios de La Plata y su población.
-# - Superponer buffers de gimnasios.
-# - Colorear barrios según el índice de accesibilidad.
-# - Permitir interacción con el mapa (hover, click, leyendas).
+# Funciones para generar el mapa interactivo de gimnasios en La Plata.
 
 import folium
 import geopandas as gpd
 import pandas as pd
 import branca.colormap as cm
-
 from shapely.geometry import Point
-from utils import load_gym_data, load_barrios
 from folium import FeatureGroup
+from utils import load_gym_data, load_barrios
 
 
-# -------------------------------
-# 1) Cargar datos reales
-# -------------------------------
-gimnasios = load_gym_data("data/gimnasios.geojson")
-buffer_500 = gpd.read_file("data/buffer_500m.geojson")
-buffer_1000 = gpd.read_file("data/buffer_1000m.geojson")
-barrios = load_barrios("data/barrios.geojson")
-censo = gpd.read_file("data/la_plata_censo.geojson")
+def preparar_datos():
+    """Carga y prepara los datos: gimnasios, buffers, barrios y censo."""
+    gimnasios = load_gym_data("data/raw/gimnasios.geojson")
+    buffer_500 = gpd.read_file("data/processed/buffer_500m.geojson")
+    buffer_1000 = gpd.read_file("data/processed/buffer_1000m.geojson")
+    barrios = load_barrios("data/raw/barrios.geojson")
+    censo = gpd.read_file("data/raw/la_plata_censo.geojson")
 
-# -------------------------------
-# 1a) Agregar población estimada a cada barrio
-# -------------------------------
-barrios = barrios.reset_index(drop=True)
-censo = censo.reset_index(drop=True)
+    # Agregar población a barrios
+    barrios = barrios.reset_index(drop=True)
+    censo = censo.reset_index(drop=True)
 
-if "index_right" in barrios.columns:
-    barrios = barrios.drop(columns=["index_right"])
-if "index_right" in censo.columns:
-    censo = censo.drop(columns=["index_right"])
+    if "index_right" in barrios.columns:
+        barrios = barrios.drop(columns=["index_right"])
+    if "index_right" in censo.columns:
+        censo = censo.drop(columns=["index_right"])
 
-# Proyección a CRS métrico
-barrios_proj = barrios.to_crs(epsg=3857)
-censo_proj = censo.to_crs(epsg=3857)
+    barrios_proj = barrios.to_crs(epsg=3857)
+    censo_proj = censo.to_crs(epsg=3857)
 
-# Join espacial
-barrios_join = gpd.sjoin(barrios_proj, censo_proj, how="left", predicate="intersects")
-pob_por_barrio = barrios_join.groupby(barrios_join.index)["POB_TOT_P"].sum()
+    barrios_join = gpd.sjoin(barrios_proj, censo_proj, how="left", predicate="intersects")
+    pob_por_barrio = barrios_join.groupby(barrios_join.index)["POB_TOT_P"].sum()
+    barrios["population"] = pob_por_barrio.fillna(0)
 
-# Asignar población
-barrios["population"] = pob_por_barrio
-barrios["population"] = barrios["population"].fillna(0)
-print(barrios[["name", "population"]].head(10))
+    # Reparar gimnasios inválidos
+    gimnasios_invalidos = gimnasios[~gimnasios.geometry.type.eq("Point") | gimnasios.geometry.isna()]
+    if not gimnasios_invalidos.empty:
+        gimnasios_invalidos["geometry"] = gimnasios_invalidos.apply(
+            lambda row: Point(row["long"], row["lat"]), axis=1
+        )
 
-# -------------------------------
-# 2) Reparar gimnasios inválidos
-# -------------------------------
-gimnasios_invalidos = gimnasios[~gimnasios.geometry.type.eq("Point") | gimnasios.geometry.isna()]
-
-if not gimnasios_invalidos.empty:
-    gimnasios_invalidos["geometry"] = gimnasios_invalidos.apply(
-        lambda row: Point(row["long"], row["lat"]), axis=1
+    gimnasios_validos = gimnasios[gimnasios.geometry.type.eq("Point") & gimnasios.geometry.notna()]
+    gimnasios = gpd.GeoDataFrame(
+        pd.concat([gimnasios_validos, gimnasios_invalidos], ignore_index=True),
+        geometry="geometry",
+        crs="EPSG:4326"
     )
 
-gimnasios_validos = gimnasios[gimnasios.geometry.type.eq("Point") & gimnasios.geometry.notna()]
-
-gimnasios = gpd.GeoDataFrame(
-    pd.concat([gimnasios_validos, gimnasios_invalidos], ignore_index=True),
-    geometry="geometry",
-    crs="EPSG:4326"
-)
-
-# -------------------------------
-# 3) Índice de accesibilidad (método 2SFCA)
-# -------------------------------
-
-# Paso 1: calcular la razón R_j = S_j / P_j para cada gimnasio (oferta/población)
-# Suponemos S_j = 1 gimnasio por buffer
-buffer_500["Rj"] = 1 / buffer_500["poblacion"]
-buffer_500["Rj"] = buffer_500["Rj"].replace([float("inf")], 0).fillna(0)
-
-# Paso 2: calcular A_i = suma de Rj de los gimnasios cuyo buffer intersecta el barrio
-barrios["indice_accesibilidad"] = 0.0
-
-for i, barrio in barrios.iterrows():
-    gimnasios_cercanos = buffer_500[buffer_500.intersects(barrio.geometry)]
-    if len(gimnasios_cercanos) > 0:
-        barrios.at[i, "indice_accesibilidad"] = gimnasios_cercanos["Rj"].sum()
-    else:
-        barrios.at[i, "indice_accesibilidad"] = 0.0
-
-# También guardamos cuántos gimnasios tiene cerca
-barrios["gimnasios_cercanos"] = barrios.apply(
-    lambda row: buffer_500.intersects(row.geometry).sum(), axis=1
-)
-
-print(barrios[["name", "population", "gimnasios_cercanos", "indice_accesibilidad"]].head(10))
+    return gimnasios, buffer_500, buffer_1000, barrios
 
 
-# -------------------------------
-# 4) Generar mapa
-# -------------------------------
-def generar_mapa(gimnasios, buffer_500, buffer_1000, barrios, output_file="mapa.html"):
+def calcular_indice_accesibilidad(barrios, buffer_500):
+    """Calcula el índice de accesibilidad 2SFCA."""
+    buffer_500["Rj"] = 1 / buffer_500["poblacion"]
+    buffer_500["Rj"] = buffer_500["Rj"].replace([float("inf")], 0).fillna(0)
+
+    barrios["indice_accesibilidad"] = 0.0
+    for i, barrio in barrios.iterrows():
+        gimnasios_cercanos = buffer_500[buffer_500.intersects(barrio.geometry)]
+        barrios.at[i, "indice_accesibilidad"] = gimnasios_cercanos["Rj"].sum() if len(gimnasios_cercanos) > 0 else 0.0
+
+    barrios["gimnasios_cercanos"] = barrios.apply(
+        lambda row: buffer_500.intersects(row.geometry).sum(), axis=1
+    )
+    return barrios
+
+
+def generar_mapa(gimnasios, buffer_500, buffer_1000, barrios, output_file="docs/index.html"):
+    """Genera y guarda el mapa interactivo."""
     m = folium.Map(location=[-34.9214, -57.9544], zoom_start=13)
 
     # Grupos de capas
@@ -112,7 +84,7 @@ def generar_mapa(gimnasios, buffer_500, buffer_1000, barrios, output_file="mapa.
     colormap = cm.linear.Blues_09.scale(min_val, max_val)
     colormap.caption = "Índice de accesibilidad (gimnasios / población)"
 
-    # Barrios
+    # Agregar barrios
     for idx, row in barrios.iterrows():
         color = colormap(row["indice_accesibilidad"]) if pd.notnull(row["indice_accesibilidad"]) else "#cccccc"
         folium.GeoJson(
@@ -161,18 +133,5 @@ def generar_mapa(gimnasios, buffer_500, buffer_1000, barrios, output_file="mapa.
     colormap.add_to(m)
     folium.LayerControl(collapsed=False).add_to(m)
 
-    # Guardar
-    output_file = "src/outputs/mapa_interactivo.html"
     m.save(output_file)
     print(f"Mapa guardado en {output_file}")
-
-
-if __name__ == "__main__":
-    generar_mapa(
-        gimnasios,
-        buffer_500,
-        buffer_1000,
-        barrios,
-        output_file="outputs/mapa_interactivo.html",
-    )
-

@@ -11,8 +11,8 @@ import geopandas as gpd
 # -------------------------------
 # 1) Cargar datos procesados
 # -------------------------------
-gimnasios = gpd.read_file("data/gimnasios.geojson")
-censo = gpd.read_file("data/la_plata_censo.geojson")
+gimnasios = gpd.read_file("data/raw/gimnasios.geojson")
+censo = gpd.read_file("data/raw/la_plata_censo.geojson")
 
 # -------------------------------
 # 2) Crear buffers
@@ -85,8 +85,8 @@ buffer_500 = buffer_500.to_crs(epsg=4326)
 buffer_1000 = buffer_1000.to_crs(epsg=4326)
 
 # Guardar resultados en la carpeta correcta
-buffer_500.to_file("data/buffer_500m.geojson", driver="GeoJSON")
-buffer_1000.to_file("data/buffer_1000m.geojson", driver="GeoJSON")
+buffer_500.to_file("data/processed/buffer_500m.geojson", driver="GeoJSON")
+buffer_1000.to_file("data/processed/buffer_1000m.geojson", driver="GeoJSON")
 
 print("Buffers con población estimada guardados en /data")
 

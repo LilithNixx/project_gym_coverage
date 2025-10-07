@@ -1,6 +1,11 @@
 # app.py
 # -------------------------------
-# Propósito: Ejecutar la aplicación final interactiva.
-# - Integrar los datos procesados, las métricas y las visualizaciones.
-# - Permitir al usuario interactuar con los mapas y gráficos.
-# - Servir como punto de entrada principal del proyecto.
+# Punto de entrada principal
+# Ejecuta todo el flujo y genera el mapa final
+
+from map_interactive import preparar_datos, calcular_indice_accesibilidad, generar_mapa
+
+if __name__ == "__main__":
+    gimnasios, buffer_500, buffer_1000, barrios = preparar_datos()
+    barrios = calcular_indice_accesibilidad(barrios, buffer_500)
+    generar_mapa(gimnasios, buffer_500, buffer_1000, barrios)
